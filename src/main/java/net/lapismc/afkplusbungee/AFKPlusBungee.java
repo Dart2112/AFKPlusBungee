@@ -59,11 +59,11 @@ public final class AFKPlusBungee extends JavaPlugin implements PluginMessageList
     }
 
     private void broadcastStart(String name) {
-        Bukkit.broadcastMessage(plugin.config.getMessage("Broadcast.Start").replace("%PLAYER%", name));
+        Bukkit.broadcastMessage(plugin.config.getMessage("Broadcast.Start").replace("{PLAYER}", name));
     }
 
     private void broadcastStop(String name) {
-        Bukkit.broadcastMessage(plugin.config.getMessage("Broadcast.Stop").replace("%PLAYER%", name));
+        Bukkit.broadcastMessage(plugin.config.getMessage("Broadcast.Stop").replace("{PLAYER}", name));
     }
 
     @Override
