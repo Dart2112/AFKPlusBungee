@@ -1,5 +1,6 @@
 name: AFKPlusBungee
 version: ${project.version}
+api-version: 1.13
 main: net.lapismc.afkplusbungee.AFKPlusBungee
 depend: [AFKPlus]
 authors: [Dart2112]
