@@ -14,49 +14,34 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 
-import java.util.UUID;
+import java.io.*;
 
 @SuppressWarnings({"unused", "UnstableApiUsage"})
 public final class AFKPlusBungee extends JavaPlugin implements PluginMessageListener, Listener {
 
     private AFKPlus plugin;
-    private UUID id;
 
     @Override
     public void onEnable() {
         plugin = new AFKPlusAPI().getPlugin();
-        id = UUID.randomUUID();
-        this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
-        this.getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", this);
+        Bukkit.getPluginManager().registerEvents(this, this);
+        getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+        getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", this);
         getLogger().info(getName() + " v." + getDescription().getVersion() + " has been enabled!");
     }
 
     @EventHandler
     public void onAFKStart(AFKStartEvent e) {
         String name = e.getPlayer().getName();
-
-        ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("AFKPlus");
-        out.writeUTF(name);
-        out.writeUTF("Start");
-        out.writeUTF(id.toString());
-
         Player player = Bukkit.getPlayer(e.getPlayer().getUUID());
-        player.sendPluginMessage(this, "BungeeCord", out.toByteArray());
+        player.sendPluginMessage(this, "BungeeCord", compileState(name, "Start"));
     }
 
     @EventHandler
     public void onAFKStop(AFKStopEvent e) {
         String name = e.getPlayer().getName();
-
-        ByteArrayDataOutput out = ByteStreams.newDataOutput();
-        out.writeUTF("AFKPlus");
-        out.writeUTF(name);
-        out.writeUTF("Stop");
-        out.writeUTF(id.toString());
-
         Player player = Bukkit.getPlayer(e.getPlayer().getUUID());
-        player.sendPluginMessage(this, "BungeeCord", out.toByteArray());
+        player.sendPluginMessage(this, "BungeeCord", compileState(name, "Stop"));
     }
 
     private void broadcastStart(String name) {
@@ -68,23 +53,55 @@ public final class AFKPlusBungee extends JavaPlugin implements PluginMessageList
     }
 
     @Override
-    public void onPluginMessageReceived(String channel, Player player, byte[] message) {
+    public void onPluginMessageReceived(String channel, Player player, byte[] bytes) {
+        getLogger().info(channel + ": Message received");
         if (!channel.equals("BungeeCord")) {
             return;
         }
-        ByteArrayDataInput in = ByteStreams.newDataInput(message);
-        String subChannel = in.readUTF();
-        if (subChannel.equals("AFKPlus")) {
-            String name = in.readUTF();
-            String state = in.readUTF();
-            String serverUUID = in.readUTF();
-            if (serverUUID.equals(id.toString()))
-                return;
-            if (state.equalsIgnoreCase("Start"))
-                broadcastStart(name);
-            if (state.equalsIgnoreCase("Stop"))
-                broadcastStop(name);
-        }
+        String sentMessage = getMessage(bytes);
+        if (sentMessage == null)
+            return;
+        String[] message = sentMessage.split(":");
+        String name = message[0];
+        String state = message[1];
+        if (state.equalsIgnoreCase("Start"))
+            broadcastStart(name);
+        if (state.equalsIgnoreCase("Stop"))
+            broadcastStop(name);
     }
 
+
+    private byte[] compileState(String username, String state) {
+        ByteArrayDataOutput out = ByteStreams.newDataOutput();
+        out.writeUTF("Forward");
+        out.writeUTF("ALL");
+        out.writeUTF("AFKPlus");
+        ByteArrayOutputStream msgBytes = new ByteArrayOutputStream();
+        DataOutputStream dataOutputStream = new DataOutputStream(msgBytes);
+        try {
+            dataOutputStream.writeUTF(username + ":" + state);
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        }
+        out.writeShort(msgBytes.toByteArray().length);
+        out.write(msgBytes.toByteArray());
+        return out.toByteArray();
+    }
+
+    private String getMessage(byte[] message) {
+        ByteArrayDataInput in = ByteStreams.newDataInput(message);
+        String subChannel = in.readUTF();
+        if (!subChannel.equalsIgnoreCase("AFKPlus")) {
+            return null;
+        }
+        short len = in.readShort();
+        byte[] msgBytes = new byte[len];
+        in.readFully(msgBytes);
+        DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(msgBytes));
+        try {
+            return dataInputStream.readUTF(); // Read the data in the same way you wrote it
+        } catch (IOException e) {
+            return null;
+        }
+    }
 }
