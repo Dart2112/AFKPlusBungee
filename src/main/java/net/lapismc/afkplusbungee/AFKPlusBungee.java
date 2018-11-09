@@ -54,7 +54,6 @@ public final class AFKPlusBungee extends JavaPlugin implements PluginMessageList
 
     @Override
     public void onPluginMessageReceived(String channel, Player player, byte[] bytes) {
-        getLogger().info(channel + ": Message received");
         if (!channel.equals("BungeeCord")) {
             return;
         }
