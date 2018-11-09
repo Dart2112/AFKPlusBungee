@@ -16,6 +16,7 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 
 import java.util.UUID;
 
+@SuppressWarnings({"unused", "UnstableApiUsage"})
 public final class AFKPlusBungee extends JavaPlugin implements PluginMessageListener, Listener {
 
     private AFKPlus plugin;
