@@ -7,6 +7,7 @@ import net.lapismc.afkplus.AFKPlus;
 import net.lapismc.afkplus.api.AFKPlusAPI;
 import net.lapismc.afkplus.api.AFKStartEvent;
 import net.lapismc.afkplus.api.AFKStopEvent;
+import net.lapismc.afkplus.util.prettytime.units.Second;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -16,7 +17,7 @@ import org.bukkit.plugin.messaging.PluginMessageListener;
 
 import java.io.*;
 
-@SuppressWarnings({"unused", "UnstableApiUsage"})
+@SuppressWarnings("unused")
 public final class AFKPlusBungee extends JavaPlugin implements PluginMessageListener, Listener {
 
     private AFKPlus plugin;
@@ -63,6 +64,9 @@ public final class AFKPlusBungee extends JavaPlugin implements PluginMessageList
         String[] message = sentMessage.split(":");
         String name = message[0];
         String state = message[1];
+        long timeSent = Long.parseLong(message[2]);
+        if (timeSent < (System.currentTimeMillis() - new Second().getMillisPerUnit()))
+            return;
         if (state.equalsIgnoreCase("Start"))
             broadcastStart(name);
         if (state.equalsIgnoreCase("Stop"))
@@ -78,7 +82,7 @@ public final class AFKPlusBungee extends JavaPlugin implements PluginMessageList
         ByteArrayOutputStream msgBytes = new ByteArrayOutputStream();
         DataOutputStream dataOutputStream = new DataOutputStream(msgBytes);
         try {
-            dataOutputStream.writeUTF(username + ":" + state);
+            dataOutputStream.writeUTF(username + ":" + state + ":" + System.currentTimeMillis());
         } catch (IOException exception) {
             exception.printStackTrace();
         }
