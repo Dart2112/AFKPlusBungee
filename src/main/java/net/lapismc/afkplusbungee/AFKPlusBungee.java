@@ -65,7 +65,7 @@ public final class AFKPlusBungee extends JavaPlugin implements PluginMessageList
         String name = message[0];
         String state = message[1];
         long timeSent = Long.parseLong(message[2]);
-        if (timeSent < (System.currentTimeMillis() - new Second().getMillisPerUnit()))
+        if (timeSent < (System.currentTimeMillis() - (new Second().getMillisPerUnit() / 4)))
             return;
         if (state.equalsIgnoreCase("Start"))
             broadcastStart(name);
